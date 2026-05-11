@@ -1,0 +1,134 @@
+(footprint "LM2596"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 23 1 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "3171210f-8461-4b7d-bd0d-7c84393f062e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "LM2596"
+		(at 23 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "f62cbecd-8042-4b68-ba4f-b050baebbe56")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "96ea7bcd-206f-4638-9d72-ced89ec7ba54")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "2532b433-3bb2-4ed9-b9f2-9e45b96b3c2d")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_rect
+		(start 0 0)
+		(end 44 21)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "d500474b-920a-40f0-804f-3abb99de4e2a")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 23 4 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "ee3d86de-6d1f-481e-a894-cf79e347f0a7")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole custom
+		(at 1.5 1.5)
+		(size 3 3)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(options
+			(clearance outline)
+			(anchor rect)
+		)
+		(primitives)
+		(uuid "81f1dd7c-741d-408f-8269-424e1cc0dab5")
+	)
+	(pad "2" thru_hole custom
+		(at 1.5 19.5)
+		(size 3 3)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(options
+			(clearance outline)
+			(anchor rect)
+		)
+		(primitives)
+		(uuid "6a8f0300-cf1f-483e-a87f-7dceb92ced3c")
+	)
+	(pad "3" thru_hole custom
+		(at 42.5 19.5)
+		(size 3 3)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(options
+			(clearance outline)
+			(anchor rect)
+		)
+		(primitives)
+		(uuid "e29820a6-53bb-4067-8dcb-cd3d8e57a9e5")
+	)
+	(pad "4" thru_hole custom
+		(at 42.5 1.5)
+		(size 3 3)
+		(drill 0.8)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(options
+			(clearance outline)
+			(anchor rect)
+		)
+		(primitives)
+		(uuid "1d7a8ff6-4905-4bc1-a73a-96bb50287616")
+	)
+	(embedded_fonts no)
+)

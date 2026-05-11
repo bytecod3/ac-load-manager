@@ -1,0 +1,4 @@
+(fp_lib_table
+	(version 7)
+	(lib (name "my_kicad_footprints") (type "KiCad") (uri "C:/Users/emwit/Desktop/projects/others/load-manager/hardware/my_kicad_footprints.pretty") (options "") (descr ""))
+)

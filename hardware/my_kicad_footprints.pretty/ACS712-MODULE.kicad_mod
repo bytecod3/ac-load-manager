@@ -1,0 +1,82 @@
+(footprint "ACS712-MODULE"
+	(version 20260206)
+	(generator "pcbnew")
+	(generator_version "10.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 16.5 1 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "3a6aee35-45c5-480c-9f88-19ec03e60cd2")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "ACS712-MODULE"
+		(at 16.5 2.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "2f9f3949-221a-437f-8a6a-b83acb417e94")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "f16bbf64-3094-442b-8bb9-f1b35b01f49f")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "615bf217-18f1-4681-acc4-05684deacaf5")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(duplicate_pad_numbers_are_jumpers no)
+	(fp_rect
+		(start 0 0)
+		(end 32 13)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(fill no)
+		(layer "F.SilkS")
+		(uuid "688f4ddb-18bf-4ab2-b9c6-86d0e72782d6")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 16.5 4 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "d853f5ca-1fa6-42e6-81ba-8c5ef7892b65")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(embedded_fonts no)
+)
