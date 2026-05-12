@@ -7,6 +7,10 @@
 #include "WiFi.h"
 #include "WiFiManager.h"
 #include "defines.h"
+#include "ACS712.h"
+#include "mongoose.h"
+
+
 
 typedef struct {
   float pin;        /* what pin are we connected to */
@@ -22,16 +26,19 @@ load_t load_4;
 /*Queues*/
 QueueHandle_t load_queue;
 
+/* Timers */
+TimerHandle_t mqtt_pub_timer = NULL;
+
 /*============= tasks */
 
 /*===========to read and store current */
-void read_current(void* params);
+void read_current_task(void* params);
 
 /* to control the loads */
-void load_control(void* params);
+void load_control_task(void* params);
 
 /* to publish data readings to MQTT */
-void publish_readings(void* params);
+void publish_readings_task(void* params);
 
 /*=========global functions */
 void setup_wifi_provisioner();
@@ -45,10 +52,20 @@ void buzzer();
 /* onboard LED control */
 void led_control();
 
+
+
 /*========================tasks*/
 /*===========to read and store current */
 void read_current(void* params) {
+
+  float feed_ld = 0.0f;
+  float load_1 = 0.0f;
+  float load_2 = 0.0f;
+  float load_3 = 0.0f;
+  float load_4 = 0.0f;
+
   for(;;) {
+
 
   }
 }
@@ -68,6 +85,30 @@ void setup() {
   } else {
     Serial.println("[-]Failed to create load data queue");
   }
+
+  /*============== create tasks*/
+  BaseType_t a = xTaskCreate(read_current_task, "read_current", 1024, NULL,  1, NULL);
+  if(a != NULL) {
+    Serial.println("[+] read current task created OK");
+  } else {
+    Serial.println("[-] Failed to create read current_task");
+  }
+
+  BaseType_t b = xTaskCreate(load_control_task, "load_control", 1024, NULL,  1, NULL);
+  if(b != NULL) {
+    Serial.println("[+] load_control_task created OK");
+  } else {
+    Serial.println("[-] Failed to create load_control_task");
+  }
+
+  BaseType_t c = xTaskCreate(publish_readings_task, "publish_readings", 2048, NULL,  1, NULL);
+  if(c != NULL) {
+    Serial.println("[+] publish_readings_task created OK");
+  } else {
+    Serial.println("[-] Failed to create publish_readings_task");
+  }
+
+
 }
 
 void loop() {

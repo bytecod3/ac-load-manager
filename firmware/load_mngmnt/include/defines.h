@@ -24,3 +24,4 @@ uint16_t MQTT_PORT = 1883;
 const char* id = "load_mngr";
 const char* commands_topic = "/commands";
 const char* data_topic = "/data";
+#define MQTT_PUBLISH_PERIOD  (2000)

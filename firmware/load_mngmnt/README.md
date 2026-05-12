@@ -7,3 +7,5 @@
 6. Selectr the appropriate network
 7. Enter SSID and password and click ```save```
 
+## Refs
+1. https://deepbluembedded.com/arduino-acs712-ac-dc-current-sensor-measurement-examples/
