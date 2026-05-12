@@ -19,6 +19,7 @@
 #define BAUDRATE        (115200)
 
 /*============MQTT config*/
+const char* MQTT_HOST = "";
 uint16_t MQTT_PORT = 1883;
 
 const char* id = "load_mngr";
