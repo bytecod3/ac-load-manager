@@ -75,6 +75,15 @@
     </div>
 
     <div class="card">
+        <h2>Set Load Thresholds</h2>
+        <p class="status">Load 1: <span id="l1"><input id="l1_threshold" type="text"></span></p>
+        <p class="status">Load 2: <span id="l2"><input id="l2_threshold" type="text"></span></p>
+        <p class="status">Load 3: <span id="l3"><input id="l3_threshold" type="text"></span></p>
+        <p class="status">Load 4: <span id="l4"><input id="l4_threshold" type="text"></span></p>
+        <button onclick="update_load_thresholds()">Update</button>
+    </div>
+
+    <div class="card">
         <h2>Manual Load Control</h2>
         <button onclick="toggleLoad(1)">Toggle Load 1</button>
         <button onclick="toggleLoad(2)">Toggle Load 2</button>
@@ -145,20 +154,41 @@
         onSuccess: onConnect
     })
 
+    /* types of payloads */
+    let load_control = "load_ctrl";
+    let schedule = "load_schedule";
+    let priority_set = "load_priority";
+    let threshold = "load_threshold";
+
+
     /* publish MQTT message */
     function send_mqtt_message(msg) {
         // publish a message
-        let message =  new Paho.Message(msg)
+        let message = new Paho.Message(msg)
         message.destinationName = "load_mngr/commands"
         message.qos = 0;
 
         client.send(message);
     }
 
-    /* types of payloads */
-    let load_control = "load_ctrl";
-    let schedule = "load_schedule";
-    let priority_set = "load_priority";
+    function update_load_thresholds() {
+        let l1_thres = document.getElementById("l1_threshold").value;
+        let l2_thres = document.getElementById("l2_threshold").value;
+        let l3_thres = document.getElementById("l3_threshold").value;
+        let l4_thres = document.getElementById("l4_threshold").value;
+
+        obj = {
+            "payload_type": String(threshold),
+            "load_1": l1_thres,
+            "load_2": l2_thres,
+            "load_3": l3_thres,
+            "load_4": l4_thres,
+        }
+
+        let s = JSON.stringify(obj);
+        send_mqtt_message(s);
+
+    }
 
     /* load states */
     let load_1_state = false;
@@ -167,7 +197,6 @@
     let load_4_state = false;
 
     function toggleLoad(id) {
-        //alert('Toggling Load ' + id + ' (send MQTT command)');
 
         let load = "";
 

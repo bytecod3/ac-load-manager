@@ -11,6 +11,9 @@
 #include "mongoose.h"
 #include <ArduinoJson.h>
 #include "pins.h"
+#include "Preferences.h"
+
+Preferences prefs;
 
 /* Timers */
 TimerHandle_t mqtt_pub_timer = NULL;
@@ -117,6 +120,11 @@ void init_load_control_pins() {
   pinMode(LOAD_2_CONTROL_PIN, OUTPUT);
   pinMode(LOAD_3_CONTROL_PIN, OUTPUT);
   pinMode(LOAD_4_CONTROL_PIN, OUTPUT);
+
+}
+
+/* update non-voltaile memory */
+void update_thresholds_nvs() {
 
 }
 
@@ -285,7 +293,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
       const char* payload_type = doc["payload_type"];      // payload type
       Serial.println(payload_type);
       
-      if(strcmp(payload_type, "load_ctrl") == 0) {
+      if(strcmp(payload_type, "load_ctrl") == 0) {  /* LOAD CONTROL */
         MG_INFO(("Load control"));
 
         uint8_t load_num = doc["load"];
@@ -338,8 +346,24 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
       } else if(strcmp(payload_type, "load_priority") == 0) {
         MG_INFO(("Load priority"));
 
-      }
+      } else if(strcmp(payload_type, "load_threshold") == 0) {
+        MG_INFO(("Load threshold"));
 
+        doc.clear();
+
+        deserializeJson(doc, mm->data.buf);
+        float l1_threshold = doc["load_1"];
+        float l2_threshold = doc["load_2"];
+        float l3_threshold = doc["load_3"];
+        float l4_threshold = doc["load_4"];
+
+        /* update NVS */
+        prefs.putFloat("l1_thres", float(l1_threshold));
+        prefs.putFloat("l2_thres", float(l2_threshold));
+        prefs.putFloat("l3_thres", float(l3_threshold));
+        prefs.putFloat("l4_thres", float(l4_threshold));
+
+      }
 
     }
 
@@ -455,6 +479,15 @@ void setup() {
 
   /* init load control pins */
   init_load_control_pins();
+
+  /* initialise preferences library */
+  prefs.begin("load_thresholds", false);
+
+  Serial.println(prefs.getFloat("l1_thres", 0));
+  Serial.println(prefs.getFloat("l2_thres", 0));
+  Serial.println(prefs.getFloat("l3_thres", 0));
+  Serial.println(prefs.getFloat("l4_thres", 0));
+
 
   /*======== create queues*/
   load_queue = xQueueCreate(1, sizeof(mqtt_payload));
