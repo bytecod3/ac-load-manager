@@ -103,17 +103,34 @@
     <div class="card">
         <h2>Priority Management</h2>
         <label>Load 1 Priority</label>
-        <select><option>High</option><option>Medium</option><option>Low</option></select>
+        <select id="l1_priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+        </select>
 
         <label>Load 2 Priority</label>
-        <select><option>High</option><option>Medium</option><option>Low</option></select>
+        <select id="l2_priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+        </select>
 
         <label>Load 3 Priority</label>
-        <select><option>High</option><option>Medium</option><option>Low</option></select>
+        <select id="l3_priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+        </select>
 
         <label>Load 4 Priority</label>
-        <select><option>High</option><option>Medium</option><option>Low</option></select>
-        <button>Apply Priorities</button>
+        <select id="l4_priority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+        </select>
+
+        <button onclick="apply_priority()">Apply Priorities</button>
 
     </div>
 
@@ -170,7 +187,23 @@
 
         client.send(message);
     }
+    function apply_priority() {
+        let l1_priority = document.getElementById("l1_priority").value;
+        let l2_priority = document.getElementById("l2_priority").value;
+        let l3_priority = document.getElementById("l3_priority").value;
+        let l4_priority = document.getElementById("l4_priority").value;
 
+        let obj = {
+            "payload_type": String(priority_set),
+            "load_1": l1_priority,
+            "load_2": l2_priority,
+            "load_3": l3_priority,
+            "load_4": l4_priority
+        }
+
+        let s = JSON.stringify(obj);
+        send_mqtt_message(s);
+    }
     function update_load_thresholds() {
         let l1_thres = document.getElementById("l1_threshold").value;
         let l2_thres = document.getElementById("l2_threshold").value;

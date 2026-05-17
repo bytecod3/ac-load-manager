@@ -13,7 +13,8 @@
 #include "pins.h"
 #include "Preferences.h"
 
-Preferences prefs;
+Preferences thresholds_prefs;
+Preferences priority_prefs;
 
 /* Timers */
 TimerHandle_t mqtt_pub_timer = NULL;
@@ -208,10 +209,10 @@ void load_control_task(void* params) {
   digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
 
   /*fetch thresholds from memory  */
-  float l1_thres = prefs.getFloat("l1_thres", 0);
-  float l2_thres = prefs.getFloat("l2_thres", 0);
-  float l3_thres = prefs.getFloat("l3_thres", 0);
-  float l4_thres = prefs.getFloat("l4_thres", 0);
+  float l1_thres = thresholds_prefs.getFloat("l1_thres", 0);
+  float l2_thres = thresholds_prefs.getFloat("l2_thres", 0);
+  float l3_thres = thresholds_prefs.getFloat("l3_thres", 0);
+  float l4_thres = thresholds_prefs.getFloat("l4_thres", 0);
 
   mqtt_payload msg;
 
@@ -391,11 +392,21 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
             break;
         }
 
-      } else if(strcmp(payload_type, "load_schedule") == 0) {
+      } else if(strcmp(payload_type, "load_schedule") == 0) { /* LOAD SCHEDULING CONTROL */
         MG_INFO(("Load schedule"));
 
-      } else if(strcmp(payload_type, "load_priority") == 0) {
+      } else if(strcmp(payload_type, "load_priority") == 0) { /* LOAD PRIORITY CONTROL */
         MG_INFO(("Load priority"));
+
+        const char* l1_pr = doc["load_1"];
+        const char* l2_pr = doc["load_2"];
+        const char* l3_pr = doc["load_3"];
+        const char* l4_pr = doc["load_4"];
+
+        priority_prefs.putString("l1_priority", l1_pr);
+        priority_prefs.putString("l2_priority", l2_pr);
+        priority_prefs.putString("l3_priority", l3_pr);
+        priority_prefs.putString("l4_priority", l4_pr);
 
       } else if(strcmp(payload_type, "load_threshold") == 0) {
         MG_INFO(("Load threshold"));
@@ -409,10 +420,10 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
         float l4_threshold = doc["load_4"];
 
         /* update NVS */
-        prefs.putFloat("l1_thres", float(l1_threshold));
-        prefs.putFloat("l2_thres", float(l2_threshold));
-        prefs.putFloat("l3_thres", float(l3_threshold));
-        prefs.putFloat("l4_thres", float(l4_threshold));
+        thresholds_prefs.putFloat("l1_thres", float(l1_threshold));
+        thresholds_prefs.putFloat("l2_thres", float(l2_threshold));
+        thresholds_prefs.putFloat("l3_thres", float(l3_threshold));
+        thresholds_prefs.putFloat("l4_thres", float(l4_threshold));
 
       }
 
@@ -532,12 +543,20 @@ void setup() {
   init_load_control_pins();
 
   /* initialise preferences library */
-  prefs.begin("load_thresholds", false);
+  thresholds_prefs.begin("load_thresholds", false); /* store load thresholds */
+  priority_prefs.begin("load_priorities", false); /* store load priorities */
 
-  Serial.println(prefs.getFloat("l1_thres", 0));
-  Serial.println(prefs.getFloat("l2_thres", 0));
-  Serial.println(prefs.getFloat("l3_thres", 0));
-  Serial.println(prefs.getFloat("l4_thres", 0));
+  /* confirm load thresholds */
+  Serial.println(thresholds_prefs.getFloat("l1_thres", 0));
+  Serial.println(thresholds_prefs.getFloat("l2_thres", 0));
+  Serial.println(thresholds_prefs.getFloat("l3_thres", 0));
+  Serial.println(thresholds_prefs.getFloat("l4_thres", 0));
+
+  /* confirm load prioriorities */
+  Serial.println(priority_prefs.getString("l1_priority"));
+  Serial.println(priority_prefs.getString("l2_priority"));
+  Serial.println(priority_prefs.getString("l3_priority"));
+  Serial.println(priority_prefs.getString("l4_priority"));
 
 
   /*======== create queues*/
