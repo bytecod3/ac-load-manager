@@ -83,7 +83,8 @@ load_t load_3;
 load_t load_4;
 
 /*Queues*/
-QueueHandle_t load_queue;
+QueueHandle_t load_mqtt_queue;      /* to send to MQTT */
+QueueHandle_t load_check_queue;     /* to compare against thresholds */
 
 void init_loads();
 
@@ -186,7 +187,8 @@ void read_current_task(void* params) {
 
     serializeJson(doc, msg.payload, sizeof(msg.payload));
 
-    xQueueOverwrite(load_queue, &msg);
+    xQueueOverwrite(load_mqtt_queue, &msg);
+    xQueueOverwrite(load_check_queue, &msg);
 
     vTaskDelay(pdMS_TO_TICKS(5));
   }
@@ -205,14 +207,63 @@ void load_control_task(void* params) {
   digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
   digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
 
+  /*fetch thresholds from memory  */
+  float l1_thres = prefs.getFloat("l1_thres", 0);
+  float l2_thres = prefs.getFloat("l2_thres", 0);
+  float l3_thres = prefs.getFloat("l3_thres", 0);
+  float l4_thres = prefs.getFloat("l4_thres", 0);
+
+  mqtt_payload msg;
+
   for(;;) {
 
+    /* LED feedback */
     led_state = !led_state;
-
     digitalWrite(ONBOARD_LED, led_state);
-    
-
     vTaskDelayUntil(&x_last_wake_time, x_period);
+
+
+    /* check regularly for overload detection */
+    // get current reading
+    if(xQueueReceive(load_check_queue, &msg, 0)) {
+
+      JsonDocument doc;
+      deserializeJson(doc, msg.payload);
+
+      JsonArray loads = doc["loads"];
+
+
+      JsonObject l1 = loads[0];
+      float l1_cur = l1["current"];
+
+      JsonObject l2 = loads[1];
+      float l2_cur = l2["current"];
+
+      JsonObject l3 = loads[2];
+      float l3_cur = l3["current"];
+
+      JsonObject l4 = loads[3];
+      float l4_cur = l4["current"];
+
+      /* compare thresholds and shut down */
+      if(l1_cur > l1_thres) {
+        digitalWrite(LOAD_1_CONTROL_PIN, LOW);
+      }
+      
+      if(l2_cur > l2_thres) {
+        digitalWrite(LOAD_2_CONTROL_PIN, LOW);
+      }
+      
+      if(l3_cur > l3_thres) {
+        digitalWrite(LOAD_3_CONTROL_PIN, LOW);
+      }
+      
+      if(l4_cur > l4_thres) {
+        digitalWrite(LOAD_4_CONTROL_PIN, LOW);
+      }
+
+    }
+
     vTaskDelay(pdMS_TO_TICKS(5));
   }
 
@@ -422,7 +473,7 @@ static void timer_publish(void* arg) {
   } else {
 
     /* receive from queue */
-    if(xQueueReceive(load_queue, &recvd_payload, 0)) {
+    if(xQueueReceive(load_mqtt_queue, &recvd_payload, 0)) {
       if(s_conn != NULL && mqtt_open) {
         struct mg_mqtt_opts pub_opts;
         pub_opts.topic = pubt;
@@ -490,11 +541,18 @@ void setup() {
 
 
   /*======== create queues*/
-  load_queue = xQueueCreate(1, sizeof(mqtt_payload));
-  if(load_queue != NULL) {
+  load_mqtt_queue = xQueueCreate(1, sizeof(mqtt_payload));
+  if(load_mqtt_queue != NULL) {
     Serial.println("[+]Load data queue created OK"); 
   } else {
     Serial.println("[-]Failed to create load data queue");
+  } 
+
+  load_check_queue = xQueueCreate(1, sizeof(mqtt_payload));
+  if(load_check_queue != NULL) {
+    Serial.println("[+]load_check_queue created OK"); 
+  } else {
+    Serial.println("[-]load_check_queue load data queue");
   }
 
   /*============== create tasks*/
@@ -505,7 +563,7 @@ void setup() {
     Serial.println("[-] Failed to create read current_task");
   }
 
-  BaseType_t b = xTaskCreate(load_control_task, "load_control", 1024, NULL,  1, NULL);
+  BaseType_t b = xTaskCreate(load_control_task, "load_control", 2500, NULL,  1, NULL);
   if(b != pdPASS) {
     Serial.println("[+] load_control_task created OK");
   } else {
