@@ -9,6 +9,7 @@
 #include "defines.h"
 #include "ACS712.h"
 #include "mongoose.h"
+#include <ArduinoJson.h>
 
 /* Timers */
 TimerHandle_t mqtt_pub_timer = NULL;
@@ -61,6 +62,9 @@ size_t mg_mqtt_next_unsub(struct mg_mqtt_message *msg, struct mg_str *topic,
 
 /*End of MQTT variables */
 
+typedef struct {
+  char payload[200];
+} mqtt_payload;
 
 
 typedef struct {
@@ -76,6 +80,36 @@ load_t load_4;
 
 /*Queues*/
 QueueHandle_t load_queue;
+
+void init_loads();
+
+/* initialize all loads */
+void init_loads() {
+  load_1 = {
+    .pin = 4,
+    .current = 0,
+    .state = 0
+  };
+
+  load_2 = {
+    .pin = 5,
+    .current = 0,
+    .state = 0
+  };
+
+  load_3 = {
+    .pin = 6,
+    .current = 0,
+    .state = 0
+  };
+
+  load_4 = {
+    .pin = 7,
+    .current = 0,
+    .state = 0
+  };
+
+}
 
 /*============= tasks */
 
@@ -104,18 +138,58 @@ void led_control();
 
 /*========================tasks*/
 /*===========to read and store current */
-void read_current(void* params) {
+void read_current_task(void* params) {
 
-  float feed_ld = 0.0f;
-  float load_1 = 0.0f;
-  float load_2 = 0.0f;
-  float load_3 = 0.0f;
-  float load_4 = 0.0f;
+  JsonDocument doc;
+  
 
+  mqtt_payload msg;
+
+  for(;;) { 
+
+    // call function to read current here
+    load_1.current = 89;
+    load_2.current = 77;
+    load_3.current = 22;
+    load_4.current = 12;
+
+    /* clear previous json */
+    doc.clear();
+    JsonArray loads = doc["loads"].to<JsonArray>();
+
+    load_t *arr[] = {&load_1, &load_2, &load_3, &load_4};
+
+    for (int i= 0; i < 4; i++) {
+      JsonObject obj = loads.add<JsonObject>();
+
+      obj["pin"] = arr[i]->pin;
+      obj["current"] = arr[i]->current;
+      obj["state"] = arr[i]->state;
+    }
+
+    serializeJson(doc, msg.payload, sizeof(msg.payload));
+
+    xQueueOverwrite(load_queue, &msg);
+
+    vTaskDelay(pdMS_TO_TICKS(5));
+  }
+}
+
+/* to control the loads */
+void load_control_task(void* params) {
+  for(;;) {
+    vTaskDelay(pdMS_TO_TICKS(5));
+  }
+
+}
+
+/* to publish data readings to MQTT */
+void publish_readings_task(void* params) {
   for(;;) {
 
-
+    vTaskDelay(pdMS_TO_TICKS(10));
   }
+
 }
 
 /**====================== MQTT functions */
@@ -187,7 +261,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
 
   }
 
-
 }
 
 
@@ -213,17 +286,14 @@ static void timer_fn(void* arg) {
  * timer function to publish MQTT data at set interval
  */
 static void timer_publish(void* arg) {
-  // struct sensor_data _sensor_data;
+  
+  mqtt_payload recvd_payload;
+
   // char recv_buffer[320];
   mg_mgr* mgr = (mg_mgr*) arg;
-  struct mg_mqtt_opts pub_opts;
 
   struct mg_str pubt = mg_str(data_topic);
   struct mg_str data;
-
-  /* set publishing options */
-  memset(&pub_opts, 0, sizeof(pub_opts));
-  pub_opts.topic = pubt;
 
   int test_data = 34;
   const char* test_str = "Load mangr";
@@ -233,18 +303,19 @@ static void timer_publish(void* arg) {
 
   } else {
 
-    data = mg_str(test_str);
-    
-    pub_opts.message = data;
-    pub_opts.qos = s_qos, pub_opts.retain = false;
-    
-    if(s_conn != NULL && mqtt_open) {
-      mg_mqtt_pub(s_conn, &pub_opts);
+    /* receive from queue */
+    if(xQueueReceive(load_queue, &recvd_payload, 0)) {
+      if(s_conn != NULL && mqtt_open) {
+        struct mg_mqtt_opts pub_opts;
+        pub_opts.topic = pubt;
+        pub_opts.message = mg_str(recvd_payload.payload);
+        pub_opts.qos = s_qos, pub_opts.retain = false;
+
+        mg_mqtt_pub(s_conn, &pub_opts);
+      }
     }
      
-    // MG_INFO(("mongoose data -> %s\r\n", recv_buffer));
   }
-  
 }
 
 /* local MQTT loop */
@@ -276,34 +347,6 @@ void mqtt_loop_task(void* params) {
 
 /**=======================End  */
 
-
-/*====================== tasks */
-
-/*===========to read and store current */
-void read_current_task(void* params) {
-  for(;;) {
-    vTaskDelay(pdMS_TO_TICKS(5));
-  }
-}
-
-/* to control the loads */
-void load_control_task(void* params) {
-  for(;;) {
-    vTaskDelay(pdMS_TO_TICKS(5));
-  }
-
-}
-
-/* to publish data readings to MQTT */
-void publish_readings_task(void* params) {
-  for(;;) {
-
-    vTaskDelay(pdMS_TO_TICKS(10));
-  }
-
-}
-
-
 /*=========================================================== */
 void setup() {
   Serial.begin(BAUDRATE);
@@ -311,8 +354,10 @@ void setup() {
 
   setup_wifi_provisioner();
 
+  init_loads();
+
   /*======== create queues*/
-  load_queue = xQueueCreate(10, sizeof(load_t));
+  load_queue = xQueueCreate(1, sizeof(mqtt_payload));
   if(load_queue != NULL) {
     Serial.println("[+]Load data queue created OK"); 
   } else {
@@ -320,7 +365,7 @@ void setup() {
   }
 
   /*============== create tasks*/
-  BaseType_t a = xTaskCreate(read_current_task, "read_current", 1024, NULL,  1, NULL);
+  BaseType_t a = xTaskCreate(read_current_task, "read_current", 2000, NULL,  1, NULL);
   if(a != NULL) {
     Serial.println("[+] read current task created OK");
   } else {
