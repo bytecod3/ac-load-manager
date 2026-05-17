@@ -275,6 +275,24 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
              mm->data.buf, (int) mm->topic.len, mm->topic.buf));
 
     /* respond to received MQTT messages here */
+    if(mg_match(mm->topic, mg_str("load_mngr/commands"), NULL)) {
+
+      /* decode message */
+      JsonDocument doc;
+      deserializeJson(doc, mm->data.buf);
+
+      /* extract necessary values */
+
+      if(strncmp(mm->data.buf, "\"OFF\"", mm->data.len) == 0) {
+        MG_INFO(("Control load 1 pin"));
+        digitalWrite(LOAD_1_CONTROL_PIN, LOW);
+      }
+
+      if(strncmp(mm->data.buf, "\"ON\"", mm->data.len) == 0) {
+        digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+      }
+
+    }
 
 
   } else if (ev == MG_EV_CLOSE) {

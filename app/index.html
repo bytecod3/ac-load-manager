@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Load Management Dashboard</title>
+
+<!--    <script src="./paho_mqtt.js" ></script>-->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -114,9 +116,101 @@
     </div>
 </div>
 
+<script src="paho_mqtt.js"></script>
+
 <script>
+
+    client = new Paho.Client(
+        "broker.hivemq.com",
+        8000,
+        "/mqtt", "web_" + Math.random().toString(16).substr(2, 8)
+    );
+
+    // set callback handlers
+    client.onConnectionLost = function (responseObject) {
+        console.log("Connection Lost: "+ responseObject.errorMessage);
+    }
+
+    client.onMessageArrived = function (message) {
+        console.log("Message Arrived: " + message.payloadString);
+    }
+
+    // called when connection is made
+    function onConnect() {
+        console.log("MQTT connected");
+    }
+
+    // connect the client, providing an onConnect callback
+    client.connect({
+        onSuccess: onConnect
+    })
+
+    /* publish MQTT message */
+    function send_mqtt_message(msg) {
+        // publish a message
+        let message =  new Paho.Message(msg)
+        message.destinationName = "load_mngr/commands"
+        message.qos = 0;
+
+        client.send(message);
+    }
+
+    /* types of payloads */
+    let load_control = "load_ctrl";
+    let schedule = "load_ctrl";
+    let priority_set = "load_ctrl";
+
+    /* load states */
+    let load_1_state = false;
+    let load_2_state = false;
+    let load_3_state = false;
+    let load_4_state = false;
+
     function toggleLoad(id) {
-        alert('Toggling Load ' + id + ' (send MQTT command)');
+        //alert('Toggling Load ' + id + ' (send MQTT command)');
+
+        let load = "";
+
+        let obj = {};
+
+        /* check which load */
+        if(id === 1) {
+            load = 1;
+            load_1_state = !load_1_state;
+
+            obj = {
+                "load": 1,
+                "state": String(load_1_state)
+            }
+        } else if(id === 2) {
+            load = 2;
+            load_2_state = !load_2_state;
+
+            obj = {
+                "load": 2,
+                "state": String(load_2_state)
+            }
+        } else if(id === 3) {
+            load = 3;
+            load_3_state = !load_3_state;
+
+            obj = {
+                "load": 3,
+                "state": String(load_3_state)
+            }
+        } else if(id === 4) {
+            load = 4;
+            load_4_state = !load_4_state;
+
+            obj = {
+                "load": 4,
+                "state": String(load_4_state)
+            }
+        }
+
+        let s = JSON.stringify(obj);
+        send_mqtt_message(s);
+
     }
 
     setInterval(() => {
@@ -137,6 +231,9 @@
         sys.innerText = overload ? 'Overload Detected' : 'Normal';
         sys.className = overload ? 'danger' : 'safe';
     }, 2000);
+
+
 </script>
+
 </body>
 </html>
