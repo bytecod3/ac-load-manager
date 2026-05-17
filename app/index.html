@@ -157,8 +157,8 @@
 
     /* types of payloads */
     let load_control = "load_ctrl";
-    let schedule = "load_ctrl";
-    let priority_set = "load_ctrl";
+    let schedule = "load_schedule";
+    let priority_set = "load_priority";
 
     /* load states */
     let load_1_state = false;
@@ -175,34 +175,34 @@
 
         /* check which load */
         if(id === 1) {
-            load = 1;
             load_1_state = !load_1_state;
 
             obj = {
+                "payload_type": String(load_control),
                 "load": 1,
                 "state": String(load_1_state)
             }
         } else if(id === 2) {
-            load = 2;
             load_2_state = !load_2_state;
 
             obj = {
+                "payload_type": String(load_control),
                 "load": 2,
                 "state": String(load_2_state)
             }
         } else if(id === 3) {
-            load = 3;
             load_3_state = !load_3_state;
 
             obj = {
+                "payload_type": String(load_control),
                 "load": 3,
                 "state": String(load_3_state)
             }
         } else if(id === 4) {
-            load = 4;
             load_4_state = !load_4_state;
 
             obj = {
+                "payload_type": String(load_control),
                 "load": 4,
                 "state": String(load_4_state)
             }

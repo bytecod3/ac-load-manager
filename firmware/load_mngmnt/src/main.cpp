@@ -282,15 +282,64 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
       deserializeJson(doc, mm->data.buf);
 
       /* extract necessary values */
+      const char* payload_type = doc["payload_type"];      // payload type
+      Serial.println(payload_type);
+      
+      if(strcmp(payload_type, "load_ctrl") == 0) {
+        MG_INFO(("Load control"));
 
-      if(strncmp(mm->data.buf, "\"OFF\"", mm->data.len) == 0) {
-        MG_INFO(("Control load 1 pin"));
-        digitalWrite(LOAD_1_CONTROL_PIN, LOW);
+        uint8_t load_num = doc["load"];
+        const char* state = doc["state"];
+
+        switch (load_num) {
+          case 1:
+            if(strcmp(state, "true")) {
+              digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+            } else {
+              digitalWrite(LOAD_1_CONTROL_PIN, LOW);
+            }
+            
+            break;
+
+          case 2:
+            if(strcmp(state, "true")) {
+              digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
+            } else {
+              digitalWrite(LOAD_2_CONTROL_PIN, LOW);
+            }
+            
+            break;
+
+          case 3:
+            if(strcmp(state, "true")) {
+              digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
+            } else {
+              digitalWrite(LOAD_3_CONTROL_PIN, LOW);
+            }
+            
+            break;
+
+          case 4:
+            if(strcmp(state, "true")) {
+              digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
+            } else {
+              digitalWrite(LOAD_4_CONTROL_PIN, LOW);
+            }
+            
+            break;
+
+          default:
+            break;
+        }
+
+      } else if(strcmp(payload_type, "load_schedule") == 0) {
+        MG_INFO(("Load schedule"));
+
+      } else if(strcmp(payload_type, "load_priority") == 0) {
+        MG_INFO(("Load priority"));
+
       }
 
-      if(strncmp(mm->data.buf, "\"ON\"", mm->data.len) == 0) {
-        digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
-      }
 
     }
 
