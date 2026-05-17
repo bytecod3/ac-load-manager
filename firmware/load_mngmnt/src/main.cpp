@@ -10,6 +10,7 @@
 #include "ACS712.h"
 #include "mongoose.h"
 #include <ArduinoJson.h>
+#include "pins.h"
 
 /* Timers */
 TimerHandle_t mqtt_pub_timer = NULL;
@@ -111,6 +112,14 @@ void init_loads() {
 
 }
 
+void init_load_control_pins() {
+  pinMode(LOAD_1_CONTROL_PIN, OUTPUT);
+  pinMode(LOAD_2_CONTROL_PIN, OUTPUT);
+  pinMode(LOAD_3_CONTROL_PIN, OUTPUT);
+  pinMode(LOAD_4_CONTROL_PIN, OUTPUT);
+
+}
+
 /*============= tasks */
 
 /*===========to read and store current */
@@ -175,9 +184,27 @@ void read_current_task(void* params) {
   }
 }
 
+volatile bool led_state = 0;
+
 /* to control the loads */
 void load_control_task(void* params) {
+
+  TickType_t x_last_wake_time = xTaskGetTickCount();
+  const TickType_t x_period = pdMS_TO_TICKS(1500);
+
+  digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+  digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
+  digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
+  digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
+
   for(;;) {
+
+    led_state = !led_state;
+
+    digitalWrite(ONBOARD_LED, led_state);
+    
+
+    vTaskDelayUntil(&x_last_wake_time, x_period);
     vTaskDelay(pdMS_TO_TICKS(5));
   }
 
@@ -347,6 +374,7 @@ void mqtt_loop_task(void* params) {
 
 /**=======================End  */
 
+
 /*=========================================================== */
 void setup() {
   Serial.begin(BAUDRATE);
@@ -355,6 +383,11 @@ void setup() {
   setup_wifi_provisioner();
 
   init_loads();
+
+  pinMode(ONBOARD_LED, OUTPUT);
+
+  /* init load control pins */
+  init_load_control_pins();
 
   /*======== create queues*/
   load_queue = xQueueCreate(1, sizeof(mqtt_payload));
@@ -366,21 +399,21 @@ void setup() {
 
   /*============== create tasks*/
   BaseType_t a = xTaskCreate(read_current_task, "read_current", 2000, NULL,  1, NULL);
-  if(a != NULL) {
+  if(a != pdPASS) {
     Serial.println("[+] read current task created OK");
   } else {
     Serial.println("[-] Failed to create read current_task");
   }
 
   BaseType_t b = xTaskCreate(load_control_task, "load_control", 1024, NULL,  1, NULL);
-  if(b != NULL) {
+  if(b != pdPASS) {
     Serial.println("[+] load_control_task created OK");
   } else {
     Serial.println("[-] Failed to create load_control_task");
   }
 
   BaseType_t c = xTaskCreate(publish_readings_task, "publish_readings", 2048, NULL,  1, NULL);
-  if(c != NULL) {
+  if(c != pdPASS) {
     Serial.println("[+] publish_readings_task created OK");
   } else {
     Serial.println("[-] Failed to create publish_readings_task");

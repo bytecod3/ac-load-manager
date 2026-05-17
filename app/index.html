@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Load Management Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f9;
+            color: #333;
+        }
+        header {
+            background: #1f4e79;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            margin-top: 0;
+            color: #1f4e79;
+        }
+        .status { font-size: 1.2em; margin: 8px 0; }
+        .safe { color: green; }
+        .danger { color: red; }
+        button {
+            padding: 10px 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #1f4e79;
+            color: white;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Smart Load Management System</h1>
+    <p>Real-time Monitoring, Scheduling, Priority Control & IoT Dashboard</p>
+</header>
+
+<div class="container">
+    <div class="card">
+        <h2>Load Monitoring</h2>
+        <p class="status">Load 1: <span id="l1">89 A</span></p>
+        <p class="status">Load 2: <span id="l2">77 A</span></p>
+        <p class="status">Load 3: <span id="l3">22 A</span></p>
+        <p class="status">Load 4: <span id="l4">12 A</span></p>
+        <p>System Status: <span id="sys" class="safe">Normal</span></p>
+    </div>
+
+    <div class="card">
+        <h2>Manual Load Control</h2>
+        <button onclick="toggleLoad(1)">Toggle Load 1</button>
+        <button onclick="toggleLoad(2)">Toggle Load 2</button>
+        <button onclick="toggleLoad(3)">Toggle Load 3</button>
+        <button onclick="toggleLoad(4)">Toggle Load 4</button>
+    </div>
+
+    <div class="card">
+        <h2>Time-Based Scheduling</h2>
+        <label>Peak Hour Start</label>
+        <input type="time">
+        <label>Peak Hour End</label>
+        <input type="time">
+        <button>Save Schedule</button>
+    </div>
+
+    <div class="card">
+        <h2>Priority Management</h2>
+        <label>Load 1 Priority</label>
+        <select><option>High</option><option>Medium</option><option>Low</option></select>
+
+        <label>Load 2 Priority</label>
+        <select><option>High</option><option>Medium</option><option>Low</option></select>
+
+        <label>Load 3 Priority</label>
+        <select><option>High</option><option>Medium</option><option>Low</option></select>
+
+        <label>Load 4 Priority</label>
+        <select><option>High</option><option>Medium</option><option>Low</option></select>
+        <button>Apply Priorities</button>
+
+    </div>
+
+    <div class="card">
+        <h2>IoT Connectivity</h2>
+        <p>MQTT Broker: Connected</p>
+        <p>Topic: load_mngr/data</p>
+        <button onclick="alert('Syncing with cloud...')">Sync Now</button>
+    </div>
+</div>
+
+<script>
+    function toggleLoad(id) {
+        alert('Toggling Load ' + id + ' (send MQTT command)');
+    }
+
+    setInterval(() => {
+        const values = [
+            Math.floor(Math.random()*100),
+            Math.floor(Math.random()*100),
+            Math.floor(Math.random()*100),
+            Math.floor(Math.random()*100)
+        ];
+
+        document.getElementById('l1').innerText = values[0] + ' A';
+        document.getElementById('l2').innerText = values[1] + ' A';
+        document.getElementById('l3').innerText = values[2] + ' A';
+        document.getElementById('l4').innerText = values[3] + ' A';
+
+        const overload = values.some(v => v > 80);
+        const sys = document.getElementById('sys');
+        sys.innerText = overload ? 'Overload Detected' : 'Normal';
+        sys.className = overload ? 'danger' : 'safe';
+    }, 2000);
+</script>
+</body>
+</html>
