@@ -94,10 +94,10 @@
     <div class="card">
         <h2>Time-Based Scheduling</h2>
         <label>Peak Hour Start</label>
-        <input type="time">
+        <input id="start_shed_time" type="time">
         <label>Peak Hour End</label>
-        <input type="time">
-        <button>Save Schedule</button>
+        <input id="stop_shed_time" type="time">
+        <button onclick="set_shed_time()">Save Schedule</button>
     </div>
 
     <div class="card">
@@ -186,6 +186,21 @@
         message.qos = 0;
 
         client.send(message);
+    }
+
+    function set_shed_time() {
+        let start_shed_time = document.getElementById("start_shed_time").value;
+        let stop_shed_time = document.getElementById("stop_shed_time").value;
+
+        let obj = {
+            "payload_type": String(schedule),
+            "start_time": start_shed_time,
+            "stop_time": stop_shed_time
+        }
+
+        let s = JSON.stringify(obj);
+        send_mqtt_message(s);
+
     }
     function apply_priority() {
         let l1_priority = document.getElementById("l1_priority").value;

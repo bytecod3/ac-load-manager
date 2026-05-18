@@ -12,9 +12,16 @@
 #include <ArduinoJson.h>
 #include "pins.h"
 #include "Preferences.h"
+#include "time.h"
+
+/* time settings */
+const char* ntp_server = "pool.ntp.org";
+const long gmt_offset = 3 * 3600; /* EAT */
+
 
 Preferences thresholds_prefs;
 Preferences priority_prefs;
+Preferences time_to_shed_prefs;
 
 /* Timers */
 TimerHandle_t mqtt_pub_timer = NULL;
@@ -87,7 +94,13 @@ load_t load_4;
 QueueHandle_t load_mqtt_queue;      /* to send to MQTT */
 QueueHandle_t load_check_queue;     /* to compare against thresholds */
 
-void init_loads();
+/* get time */
+const char* time_hr;
+
+void set_time() {
+  configTime(gmt_offset, 0, ntp_server);
+
+}
 
 /* initialize all loads */
 void init_loads() {
@@ -137,6 +150,9 @@ void read_current_task(void* params);
 
 /* to control the loads */
 void load_control_task(void* params);
+
+/* to shed the load */
+void load_shedding_task(void* params);
 
 /* to publish data readings to MQTT */
 void publish_readings_task(void* params);
@@ -208,15 +224,15 @@ void load_control_task(void* params) {
   digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
   digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
 
-  /*fetch thresholds from memory  */
-  float l1_thres = thresholds_prefs.getFloat("l1_thres", 0);
-  float l2_thres = thresholds_prefs.getFloat("l2_thres", 0);
-  float l3_thres = thresholds_prefs.getFloat("l3_thres", 0);
-  float l4_thres = thresholds_prefs.getFloat("l4_thres", 0);
-
   mqtt_payload msg;
 
   for(;;) {
+
+    /*fetch thresholds from memory  */
+    float l1_thres = thresholds_prefs.getFloat("l1_thres", 0);
+    float l2_thres = thresholds_prefs.getFloat("l2_thres", 0);
+    float l3_thres = thresholds_prefs.getFloat("l3_thres", 0);
+    float l4_thres = thresholds_prefs.getFloat("l4_thres", 0);
 
     /* LED feedback */
     led_state = !led_state;
@@ -268,6 +284,78 @@ void load_control_task(void* params) {
     vTaskDelay(pdMS_TO_TICKS(5));
   }
 
+}
+
+/* load shedding task - based on priorities */
+void load_shedding_task(void* params) {
+
+  for(;;) {
+
+    String l1_p = priority_prefs.getString("l1_priority"); /* Todo: improve this by caching in RAM */
+    String l2_p = priority_prefs.getString("l2_priority");
+    String l3_p = priority_prefs.getString("l3_priority");
+    String l4_p = priority_prefs.getString("l4_priority");
+
+    String start_time = time_to_shed_prefs.getString("start_time");
+    String stop_time = time_to_shed_prefs.getString("stop_time");
+
+    /* check the time */
+    struct tm timeinfo;
+
+    if(!getLocalTime(&timeinfo)) {
+      Serial.println("Failed to obtain time");
+      return;
+    } 
+
+    char time_string[20];
+
+    strftime(time_string, sizeof(time_string), "%H:%M", &timeinfo);
+
+    time_hr = time_string;
+    Serial.println(time_hr);
+
+    /* compare the time */
+    if (strcmp(time_hr, start_time.c_str()) == 0) {  /* shed loads that have a priority below Medium */
+      if( (strcmp(l1_p.c_str(), "Medium") == 0) || (strcmp(l1_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_1_CONTROL_PIN, LOW);
+      }
+
+      if( (strcmp(l2_p.c_str(), "Medium") == 0) || (strcmp(l2_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_2_CONTROL_PIN, LOW);
+      }
+
+      if( (strcmp(l3_p.c_str(), "Medium") == 0) || (strcmp(l3_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_3_CONTROL_PIN, LOW);
+      }
+
+      if( (strcmp(l4_p.c_str(), "Medium") == 0) || (strcmp(l4_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_4_CONTROL_PIN, LOW);
+      }
+
+    } 
+
+    if(strcmp(time_hr, stop_time.c_str()) == 0) {  /* restore loads */
+      if( (strcmp(l1_p.c_str(), "Medium") == 0) || (strcmp(l1_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+      }
+
+      if( (strcmp(l2_p.c_str(), "Medium") == 0) || (strcmp(l2_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
+      }
+
+      if( (strcmp(l3_p.c_str(), "Medium") == 0) || (strcmp(l3_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
+      }
+
+      if( (strcmp(l4_p.c_str(), "Medium") == 0) || (strcmp(l4_p.c_str(), "Low") == 0) ){
+        digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
+      }
+    }
+
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+  }
 }
 
 /* to publish data readings to MQTT */
@@ -395,6 +483,13 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
       } else if(strcmp(payload_type, "load_schedule") == 0) { /* LOAD SCHEDULING CONTROL */
         MG_INFO(("Load schedule"));
 
+        const char* start_time = doc["start_time"];
+        const char* stop_time = doc["stop_time"];
+
+        /* store shedding time */
+        time_to_shed_prefs.putString("start_time", start_time);
+        time_to_shed_prefs.putString("stop_time", stop_time);
+
       } else if(strcmp(payload_type, "load_priority") == 0) { /* LOAD PRIORITY CONTROL */
         MG_INFO(("Load priority"));
 
@@ -424,6 +519,9 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
         thresholds_prefs.putFloat("l2_thres", float(l2_threshold));
         thresholds_prefs.putFloat("l3_thres", float(l3_threshold));
         thresholds_prefs.putFloat("l4_thres", float(l4_threshold));
+
+        /* restart system to save changes  */
+        esp_restart();
 
       }
 
@@ -542,9 +640,13 @@ void setup() {
   /* init load control pins */
   init_load_control_pins();
 
+  /* config time */
+  set_time();
+
   /* initialise preferences library */
   thresholds_prefs.begin("load_thresholds", false); /* store load thresholds */
   priority_prefs.begin("load_priorities", false); /* store load priorities */
+  time_to_shed_prefs.begin("shed_time", false); /* store the time to shed loads */
 
   /* confirm load thresholds */
   Serial.println(thresholds_prefs.getFloat("l1_thres", 0));
@@ -557,6 +659,9 @@ void setup() {
   Serial.println(priority_prefs.getString("l2_priority"));
   Serial.println(priority_prefs.getString("l3_priority"));
   Serial.println(priority_prefs.getString("l4_priority"));
+
+  /* confirm scheduled time */
+  Serial.println(time_to_shed_prefs.getString("load_shed_time"));
 
 
   /*======== create queues*/
@@ -594,6 +699,13 @@ void setup() {
     Serial.println("[+] publish_readings_task created OK");
   } else {
     Serial.println("[-] Failed to create publish_readings_task");
+  } 
+
+  BaseType_t d = xTaskCreate(load_shedding_task, "load_shedding_task", 2048, NULL,  1, NULL);
+  if(d != pdPASS) {
+    Serial.println("[+] load_shedding_task created OK");
+  } else {
+    Serial.println("[-] Failed to create load_shedding_task");
   }
 
   xTaskCreate(
