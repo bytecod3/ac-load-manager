@@ -159,16 +159,30 @@
 
     client.onMessageArrived = function (message) {
         console.log("Message Arrived: " + message.payloadString);
+
+        const data = JSON.parse(message.payloadString);
+        let l1_current = data.loads[0].current;
+        let l2_current = data.loads[1].current;
+        let l3_current = data.loads[2].current;
+        let l4_current = data.loads[3].current;
+
+        document.getElementById("l1").innerText = l1_current + " A";
+        document.getElementById("l2").innerText = l2_current + " A";
+        document.getElementById("l3").innerText = l3_current + " A";
+        document.getElementById("l4").innerText = l4_current + " A";
+
     }
 
     // called when connection is made
     function onConnect() {
         console.log("MQTT connected");
+        client.subscribe("load_mngr/data");
     }
 
     // connect the client, providing an onConnect callback
     client.connect({
         onSuccess: onConnect
+
     })
 
     /* types of payloads */
@@ -290,24 +304,24 @@
 
     }
 
-    setInterval(() => {
-        const values = [
-            Math.floor(Math.random()*100),
-            Math.floor(Math.random()*100),
-            Math.floor(Math.random()*100),
-            Math.floor(Math.random()*100)
-        ];
-
-        document.getElementById('l1').innerText = values[0] + ' A';
-        document.getElementById('l2').innerText = values[1] + ' A';
-        document.getElementById('l3').innerText = values[2] + ' A';
-        document.getElementById('l4').innerText = values[3] + ' A';
-
-        const overload = values.some(v => v > 80);
-        const sys = document.getElementById('sys');
-        sys.innerText = overload ? 'Overload Detected' : 'Normal';
-        sys.className = overload ? 'danger' : 'safe';
-    }, 2000);
+    // setInterval(() => {
+    //     const values = [
+    //         Math.floor(Math.random()*100),
+    //         Math.floor(Math.random()*100),
+    //         Math.floor(Math.random()*100),
+    //         Math.floor(Math.random()*100)
+    //     ];
+    //
+    //     document.getElementById('l1').innerText = values[0] + ' A';
+    //     document.getElementById('l2').innerText = values[1] + ' A';
+    //     document.getElementById('l3').innerText = values[2] + ' A';
+    //     document.getElementById('l4').innerText = values[3] + ' A';
+    //
+    //     const overload = values.some(v => v > 80);
+    //     const sys = document.getElementById('sys');
+    //     sys.innerText = overload ? 'Overload Detected' : 'Normal';
+    //     sys.className = overload ? 'danger' : 'safe';
+    // }, 2000);
 
 
 </script>

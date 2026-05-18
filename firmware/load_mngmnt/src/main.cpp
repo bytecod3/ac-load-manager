@@ -280,21 +280,21 @@ void load_control_task(void* params) {
       }
 
       /* restore */
-      if(l1_cur < l1_thres) {
-        digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
-      }
+      // if(l1_cur < l1_thres) {
+      //   digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+      // }
       
-      if(l2_cur < l2_thres) {
-        digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
-      }
+      // if(l2_cur < l2_thres) {
+      //   digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
+      // }
       
-      if(l3_cur < l3_thres) {
-        digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
-      }
+      // if(l3_cur < l3_thres) {
+      //   digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
+      // }
       
-      if(l4_cur < l4_thres) {
-        digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
-      }
+      // if(l4_cur < l4_thres) {
+      //   digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
+      // }
 
     }
 
