@@ -279,6 +279,23 @@ void load_control_task(void* params) {
         digitalWrite(LOAD_4_CONTROL_PIN, LOW);
       }
 
+      /* restore */
+      if(l1_cur < l1_thres) {
+        digitalWrite(LOAD_1_CONTROL_PIN, HIGH);
+      }
+      
+      if(l2_cur < l2_thres) {
+        digitalWrite(LOAD_2_CONTROL_PIN, HIGH);
+      }
+      
+      if(l3_cur < l3_thres) {
+        digitalWrite(LOAD_3_CONTROL_PIN, HIGH);
+      }
+      
+      if(l4_cur < l4_thres) {
+        digitalWrite(LOAD_4_CONTROL_PIN, HIGH);
+      }
+
     }
 
     vTaskDelay(pdMS_TO_TICKS(5));
@@ -519,9 +536,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data) {
         thresholds_prefs.putFloat("l2_thres", float(l2_threshold));
         thresholds_prefs.putFloat("l3_thres", float(l3_threshold));
         thresholds_prefs.putFloat("l4_thres", float(l4_threshold));
-
-        /* restart system to save changes  */
-        esp_restart();
 
       }
 
